@@ -24,18 +24,17 @@ fn part_one(adapters: &[u32]) -> u32 {
 }
 
 fn part_two(adapters: &[u32]) -> u64 {
-    let mut paths = vec![0u64; adapters.len()];
-    for (i, &v) in adapters[..3].iter().enumerate() {
-        if v <= 3 {
-            paths[i] = 1;
-        }
-    }
-    for (i, &v) in adapters.iter().enumerate() {
-        for j in 1..=3 {
-            if i + j < adapters.len() && adapters[i + j] - v <= 3 {
-                paths[i + j] += paths[i];
+    let mut prevs = [(0, 0u64); 3];
+    prevs[2] = (0, 1);
+    for &v in adapters {
+        let mut path_count = 0;
+        for (p, c) in &prevs {
+            if v - p <= 3 {
+                path_count += c;
             }
         }
+        prevs.rotate_left(1);
+        prevs[2] = (v, path_count);
     }
-    paths[paths.len() - 1]
+    prevs[2].1
 }
