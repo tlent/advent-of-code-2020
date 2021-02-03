@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::ops::RangeInclusive;
 
 static INPUT: &str = include_str!("../input");
 
@@ -14,7 +15,7 @@ fn main() {
 #[derive(Debug)]
 struct Rule {
     field_name: String,
-    valid_ranges: [(u32, u32); 2],
+    valid_ranges: [RangeInclusive<u32>; 2],
 }
 
 fn parse_input(input: &str) -> (Vec<Rule>, Vec<u32>, Vec<Vec<u32>>) {
@@ -27,12 +28,12 @@ fn parse_input(input: &str) -> (Vec<Rule>, Vec<u32>, Vec<Vec<u32>>) {
             let mut parts = l.split(": ");
             let field_name = String::from(parts.next().unwrap());
             let mut range_strings = parts.next().unwrap().split(" or ");
-            let mut valid_ranges = [Default::default(); 2];
-            for i in 0..2 {
+            let mut valid_ranges = [0..=0, 0..=0];
+            for range in valid_ranges.iter_mut() {
                 let mut values = range_strings.next().unwrap().split("-");
                 let min = values.next().unwrap().parse().unwrap();
                 let max = values.next().unwrap().parse().unwrap();
-                valid_ranges[i] = (min, max);
+                *range = min..=max;
             }
             Rule {
                 field_name,
@@ -64,11 +65,9 @@ fn part_one(rules: &[Rule], nearby_tickets: &[Vec<u32>]) -> u32 {
     values
         .iter()
         .filter(|&&v| {
-            !rules.iter().any(|r| {
-                r.valid_ranges
-                    .iter()
-                    .any(|&(min, max)| v >= min && v <= max)
-            })
+            !rules
+                .iter()
+                .any(|r| r.valid_ranges.iter().any(|range| range.contains(&v)))
         })
         .sum()
 }
@@ -79,11 +78,9 @@ fn part_two(rules: &[Rule], my_ticket: &[u32], nearby_tickets: &[Vec<u32>]) -> u
         .iter()
         .filter(|t| {
             t.iter().all(|&v| {
-                rules.iter().any(|r| {
-                    r.valid_ranges
-                        .iter()
-                        .any(|&(min, max)| v >= min && v <= max)
-                })
+                rules
+                    .iter()
+                    .any(|r| r.valid_ranges.iter().any(|range| range.contains(&v)))
             })
         })
         .collect();
@@ -93,11 +90,10 @@ fn part_two(rules: &[Rule], my_ticket: &[u32], nearby_tickets: &[Vec<u32>]) -> u
             rules
                 .iter()
                 .filter(|r| {
-                    valid_tickets.iter().map(|t| t[i]).all(|v| {
-                        r.valid_ranges
-                            .iter()
-                            .any(|&(min, max)| v >= min && v <= max)
-                    })
+                    valid_tickets
+                        .iter()
+                        .map(|t| t[i])
+                        .all(|v| r.valid_ranges.iter().any(|range| range.contains(&v)))
                 })
                 .map(|r| &r.field_name)
                 .collect()
