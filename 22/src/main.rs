@@ -115,6 +115,13 @@ fn game(a: &[u32], b: &[u32], game_number: u32) -> (Player, Vec<u32>) {
                 b.iter().map(u32::to_string).collect::<Vec<_>>().join(", ")
             );
         }
+        // optimization from https://www.reddit.com/r/adventofcode/comments/khyjgv/2020_day_22_solutions/ggpcsnd
+        let a_max = *a.iter().max().unwrap();
+        let b_max = *b.iter().max().unwrap();
+        if a_max > b_max && a_max as usize > (a.len() + b.len()) {
+            game_winner = Some(Player::A);
+            break;
+        }
         let state = (a.clone(), b.clone());
         if seen.contains(&state) {
             game_winner = Some(Player::A);
